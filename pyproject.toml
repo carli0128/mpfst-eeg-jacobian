@@ -1,0 +1,14 @@
+[project]
+name = "mpfst-eeg-jacobian"
+version = "0.1.0"
+description = "MPFST coherence + avalanche + Jacobian toolkit for EEG-like data"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

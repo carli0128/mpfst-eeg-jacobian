@@ -1,0 +1,16 @@
+{
+  "jacobian_metrics": {
+    "eigvals": null,
+    "max_real_eig": 0.08255154873594298,
+    "spectral_radius": 0.4274466232686654,
+    "trace": -0.005461180208210098,
+    "det": 2.5109868569417202e-49,
+    "frob_norm": 18.354285236991476,
+    "is_structured": true,
+    "is_near_critical": false
+  },
+  "tail_fit": {
+    "ok": false,
+    "reason": "not_enough_avalanches"
+  }
+}

@@ -1,0 +1,17 @@
+band: beta
+latent_bands:
+  - theta
+  - alpha
+  - beta
+  - gamma
+window_sec: 10.0
+step_sec: 1.0
+gate_q1: 0.20
+gate_q2: 0.60
+valve_quantile: 0.35
+jacobian_ridge: 0.0001
+fs: 1000
+inputs:
+  - data/flip_example1_vlPFC_concat.npy
+  - data/flip_example2_7A_concat.npy
+  - data/vflip2_raw.npy

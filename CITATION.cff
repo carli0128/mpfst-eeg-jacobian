@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the accompanying manuscript."
+title: "MPFST: Coherence-gated avalanches and near-critical Jacobians in cortex"
+authors:
+  - family-names: Freeman
+    given-names: Carlos
+version: "0.1.0"
+date-released: "2025-11-30"
+repository-code: "https://github.com/carlosfreeman/mpfst_eeg_jacobian_repo"
+keywords:
+  - neuroscience
+  - eeg
+  - criticality
+  - avalanches
+  - jacobian
