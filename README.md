@@ -11,7 +11,7 @@ The design goal is **drop–in compatibility** with:
   of population trajectories, as in recent work on temporal scale–invariant
    dynamics and information-maximizing bifurcations.
 
-It is organized so that a lab like **MillerLab** can:
+It is organized so that a lab can:
 1. Plug in their own EEG/LFP or multi-unit data from PFC tasks.
 2. Recompute MPFST-style coherence meters, gate tiers and avalanche statistics.
 3. Construct a low-dimensional latent trajectory (e.g. band-power manifold).
@@ -279,9 +279,9 @@ what was used to create the committed CSV/JSON/PNG bundles.
 The same instructions are mirrored (with a bit more narrative context) in
 `data/README_DATA.md`.
 
-## Public dataset notes (Miller lab–aligned)
+## Public dataset notes 
 
-As an example of public EEG closely aligned with Miller’s work, the kit is
+As an example of public EEG, the kit is
 designed to work cleanly with monkey EEG data from:
 
 > Sandhaeger, F. et al. (2019). *Monkey EEG links neuronal color and motion
@@ -306,8 +306,6 @@ minimal path to plug in their own recording formats.
 
 ## Alignment with MPFST and the critical Jacobian picture
 
-- The coherence primitives (µ, γ, H → m_ℓ; gate thresholds m₁, m₂) follow the
-  v3/v9 addenda and cross-domain empirical dossier.
 - The avalanche valve and segmentation implement the two-tier gate as a
   dynamical object, turning coherence excursions into avalanches whose size
   statistics re-express the same fractional order inferred from µ, γ, H.
