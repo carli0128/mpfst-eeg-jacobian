@@ -1,22 +1,23 @@
 # MPFST–EEG–Jacobian Avalanche Kit
 
-This repository implements a reproducible analysis pipeline that links the MPFST
-coherence–gating + avalanche framework to low–dimensional Jacobian / criticality
-analyses on EEG-like data.
+This repository implements the canonical Manuscript-10 pathway on EEG-like data:
 
-The design goal is **drop–in compatibility** with:
-- The MPFST v9 / Addendum analysis primitives (coherence exponents, gate tiers,
-  avalanche valve)
-- Low–dimensional criticality / bifurcation analyses based on local Jacobians
-  of population trajectories, as in recent work on temporal scale–invariant
-   dynamics and information-maximizing bifurcations.
+- occupant doping fields u₄…u₈ from band-limited envelopes,
+- a fractional-memory illusions proxy d(t),
+- synergy S(t) = ∑u_p + d,
+- meltdownFrac = Heaviside[S(t) > 0.8 M\_th] in sliding windows,
+- low-dimensional Jacobian metrics on the latent [u₄…u₈, d].
+
+The legacy v9 coherence meter + valve avalanches remain available as **diagnostic
+outputs**; they are no longer treated as the MPFST order parameter here.
 
 It is organized so that a lab can:
 1. Plug in their own EEG/LFP or multi-unit data from PFC tasks.
-2. Recompute MPFST-style coherence meters, gate tiers and avalanche statistics.
-3. Construct a low-dimensional latent trajectory (e.g. band-power manifold).
-4. Estimate local Jacobians and basic criticality metrics from that trajectory.
-5. Relate avalanche exponents / gate occupancy to Jacobian spectra.
+2. Compute canonical meltdownFrac and meltdown events from S(t).
+3. Construct a low-dimensional latent trajectory (u₄…u₈ + d) and estimate local
+   Jacobians / criticality metrics.
+4. Optionally recompute the legacy coherence meter, gate tiers and avalanche
+   statistics as a sanity check.
 
 A small synthetic demo is provided so the full pipeline can be smoke-tested
 without external data. For real data (e.g. monkey EEG from Sandhaeger et al.
@@ -36,8 +37,10 @@ pip install -e .
 # 3. Run the synthetic smoke test (no external data required)
 pytest
 
-# 4. Run the end-to-end demo
+# 4. Run the end-to-end demo (canonical meltdownFrac by default)
 python scripts/run_full_pipeline.py --demo
+# Legacy diagnostics:
+# python scripts/run_full_pipeline.py --demo --mode legacy
 ```
 
 Because the project uses a `src/` layout, `pip install -e .` (or an equivalent
@@ -45,13 +48,18 @@ editable install) is required so `mpfst_eeg_jacobian` can be imported from the
 tests, scripts and notebooks. Skipping that step will reproduce the
 `ModuleNotFoundError` mentioned in the issues list.
 
-The demo uses the same defaults as the PhysioNet batch config. The most
-important CLI knobs and their defaults are:
+Canonical defaults (see `configs/canonical_meltdown_default.yaml`):
 
+- `--mth-method=quantile`, `--mth-q=0.999`
+- `--meltdown-frac=0.8`
+- `--meltdown-window-sec=5.0`, `--meltdown-step-sec=1.0`
+- `--illusions-alpha=0.05`, `--illusions-lam=0.05`, `--illusions-sigma=0.1`
+- `--jacobian-ridge=1e-4`
+
+Legacy diagnostics keep the original knobs:
 - `--latent-bands=theta,alpha,beta,gamma`
 - `--gate-q1=0.20`, `--gate-q2=0.60`
 - `--valve-quantile=0.35`
-- `--jacobian-ridge=1e-4`
 
 **Reviewer note:** the Dryad excerpts are only a few minutes long. To obtain
 ≥10 avalanches for a stable tail fit you may need to lower `--valve-quantile`
@@ -65,30 +73,28 @@ batch config without translating hyperparameters.
 
 If everything is installed correctly you should see:
 
-- A few console summaries of exponents (µ, γ, H), coherence meter m_ℓ,
-  and an avalanche tail exponent β\_aval.
-- A Jacobian estimate for a low-dimensional latent trajectory (mean/var/skew
-  features stacked across the requested bands) with a spectrum close to
+- A meltdown threshold estimate M\_th, windowed meltdownFrac, and a list of
+  meltdown events (contiguous S(t) > 0.8 M\_th) with size/peak/duration.
+- A Jacobian estimate for the latent [u₄…u₈, d] with a spectrum close to
   marginal stability (max Re(λ) ≈ 0).
+- Optional legacy diagnostics: coherence exponents (µ, γ, H), coherence meter
+  m_ℓ, valve avalanches and their tail fit.
 
 Figures and intermediate results are written to `outputs/`.
 
 ## Repository layout
 
 - `src/mpfst_eeg_jacobian/`
-  - `coherence.py` — MPFST-style exponents (µ, γ, H) and coherence meter m_ℓ,
-    including CSN tail fitting, PSD slopes and DFA, adapted from the MPFST
-      v3/v9 analysis toolbox.
-  - `avalanches.py` — dynamic coherence meter, latent meter \hat m_ℓ,
-    soft two-tier valve V(t), avalanche segmentation and tail fits,
-      following the MPFST Avalanche Addendum.
+  - `occupant_fields.py` — occupant proxies u₄…u₈ from band envelopes.
+  - `illusions_field.py` — fractional-memory surrogate for d(t).
+  - `meltdownfrac.py` — meltdownFrac indicator + windowed fraction.
+  - `meltdown_events.py` — canonical meltdown event segmentation.
+  - `coherence.py` — legacy MPFST-style exponents (µ, γ, H) and coherence meter.
+  - `avalanches.py` — legacy coherence gate + valve avalanches.
   - `preprocessing.py` — light EEG-style preprocessing: detrending,
     bandpass filters and analytic envelopes for canonical bands
-    (δ, θ, α, β, γ).
-  - `jacobian.py` — low-dimensional latent construction from band power,
-    local Jacobian estimation dX/dt ≈ J X, and basic criticality metrics
-    (spectrum, distance to the imaginary axis), in the spirit of recent
-     work on critical bifurcations as maximal-information points.
+    (δ, θ, α, β, γ, high-γ).
+  - `jacobian.py` — low-dimensional latent construction and Jacobian metrics.
   - `plotting.py` — helper plotting functions (matplotlib) used in the demo.
   - `utils.py` — small utilities (z-scoring, windowing, logging).
 
@@ -139,28 +145,29 @@ structure of every public dataset, it standardizes on simple NumPy arrays.
    sampling rate `fs` in Hz.
 2. Decide which subset of channels you treat as “PFC-like” (or use the
    average across a region of interest).
-3. Call the high-level function:
+3. Call the canonical high-level function:
 
 ```python
-from mpfst_eeg_jacobian.pipeline import run_eeg_to_jacobian_avalanches
+from mpfst_eeg_jacobian.pipeline import run_eeg_to_meltdownfrac
 
-results = run_eeg_to_jacobian_avalanches(
+results = run_eeg_to_meltdownfrac(
     eeg=eeg_array,
     fs=fs,
     channel_indices=[0, 1, 2],     # or any subset
-    band='beta',                   # or 'theta', 'alpha', 'gamma'
+    threshold_frac=0.8,
 )
 ```
 
 4. The `results` dict contains:
-   - windowed exponents `{mu, gamma, H}`,
-   - coherence meter time series `m_l` and `m_hat`,
-   - valve trace `V`,
-   - avalanche table with sizes/durations,
-   - avalanche tail-fit summary,
-   - Jacobian estimate and spectrum for the latent trajectory.
+   - occupant fields `U`, illusions field `d`, synergy `S`,
+   - meltdown threshold `Mth` and windowed meltdownFrac,
+   - meltdown event table with size/peak/duration and an optional tail fit,
+   - Jacobian estimate and spectrum for the latent [u₄…u₈, d],
+   - `diagnostics` with the legacy coherence/avalanche bundle if needed.
 
-Inspect `scripts/run_full_pipeline.py` for a complete example.
+Inspect `scripts/run_full_pipeline.py` for a complete example. Legacy v9-style
+coherence valve diagnostics are still available via `run_eeg_to_jacobian_avalanches`
+or `--mode legacy` on the CLI.
 
 ### Reproducing the packaged run
 
@@ -184,10 +191,11 @@ instructions in `data/README_DATA.md` (or re-run `scripts/download_ds006036.sh`)
 
 ### Notebook walkthrough
 
-A lightweight exploratory version of the pipeline lives in
-`notebooks/01_demo_physionet.ipynb`. It loads `data/flip_example1_vlPFC_concat.npy`,
-runs `run_eeg_to_jacobian_avalanches`, and renders the same plots bundled in the
-release.
+A canonical exploratory version of the pipeline lives in
+`notebooks/01_canonical_meltdown_demo.ipynb`. It loads public excerpts (or the
+synthetic demo), runs `run_eeg_to_meltdownfrac`, and renders S(t) with thresholds,
+meltdownFrac, event times and Jacobian diagnostics. The legacy PhysioNet demo
+notebook remains as a reference for the old valve pipeline.
 
 ## Reproducing the shipped artifacts
 
@@ -306,16 +314,13 @@ minimal path to plug in their own recording formats.
 
 ## Alignment with MPFST and the critical Jacobian picture
 
-- The avalanche valve and segmentation implement the two-tier gate as a
-  dynamical object, turning coherence excursions into avalanches whose size
-  statistics re-express the same fractional order inferred from µ, γ, H.
-- The Jacobian module treats the band-power manifold as a low-dimensional
-  dynamical system and estimates local linearizations. This matches the
-  “unified criticality/bifurcation” framing where temporal scale-invariance and
-  maximal information throughput are quantified via eigenmodes of those
-  low-dimensional ODEs.
+- Canonical: occupant fields + fractional illusions (Plane-9 proxy) drive
+  synergy S(t). MeltdownFrac thresholds S(t) at 0.8 M\_th and segments
+  contiguous meltdown events; Jacobian metrics are computed on [u₄…u₈, d].
+- Legacy diagnostics: the coherence gate + valve avalanche module is retained
+  for continuity with prior MPFST v9/Addendum analyses, but its outputs are
+  treated as supporting diagnostics rather than the primary order parameter.
 
-The goal is not to replace any lab-specific analysis, but to give a compact,
-auditable bridge between MPFST’s coherence gating and contemporary Jacobian /
-criticality work that can be run on public data and easily adapted to new
-recordings.
+The goal is not to replace any lab-specific analysis, but to provide a compact,
+auditable bridge between canonical MPFST meltdownFrac and Jacobian / criticality
+work that can be run on public data and easily adapted to new recordings.

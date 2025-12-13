@@ -1,0 +1,20 @@
+band_mapping:
+  u4: alpha
+  u5: theta
+  u6: beta
+  u7: gamma
+  u8: high_gamma
+
+illusions:
+  alpha: 0.05
+  lambda: 0.05
+  sigma: 0.1
+
+mth:
+  method: quantile
+  q: 0.999
+
+threshold_frac: 0.8
+meltdown_window_sec: 5.0
+meltdown_step_sec: 1.0
+event_min_duration: 0.0

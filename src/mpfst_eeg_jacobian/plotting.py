@@ -42,3 +42,27 @@ def plot_avalanche_ccdf(sizes, xmin=None, ax=None):
     ax.set_ylabel("P(S > s)")
     ax.grid(True, which="both", ls=":", lw=0.5)
     return fig
+
+
+def plot_synergy_with_events(times: np.ndarray, S: np.ndarray, threshold: float, events: dict):
+    """Plot S(t) with meltdown threshold and shaded events."""
+    fig, ax = plt.subplots(figsize=(8, 3))
+    ax.plot(times, S, label="S(t)")
+    ax.axhline(threshold, color="k", ls="--", lw=1, label="0.8 Mth")
+    for s, e in zip(events.get("start", []), events.get("end", [])):
+        ax.axvspan(s, e, color="red", alpha=0.15)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Synergy S")
+    ax.legend()
+    fig.tight_layout()
+    return fig
+
+
+def plot_meltdown_fraction(times: np.ndarray, mf: np.ndarray):
+    """Plot windowed meltdown fraction."""
+    fig, ax = plt.subplots(figsize=(8, 2.5))
+    ax.plot(times, mf, color="purple")
+    ax.set_xlabel("Window start (sample idx)")
+    ax.set_ylabel("meltdownFrac")
+    fig.tight_layout()
+    return fig

@@ -18,7 +18,11 @@ from .jacobian import (
     estimate_local_jacobian,
     jacobian_spectrum_metrics,
 )
-from .pipeline import run_eeg_to_jacobian_avalanches
+from .pipeline import run_eeg_to_jacobian_avalanches, run_eeg_to_meltdownfrac
+from .occupant_fields import compute_occupant_fields, DEFAULT_OCCUPANT_MAPPING
+from .illusions_field import fractional_operator_fft, simulate_d
+from .meltdownfrac import estimate_Mth, meltdown_indicator, meltdownFrac_windowed
+from .meltdown_events import extract_meltdown_events, fit_event_size_tail_exponent
 
 __all__ = [
     # coherence
@@ -38,4 +42,15 @@ __all__ = [
     "jacobian_spectrum_metrics",
     # high-level pipeline
     "run_eeg_to_jacobian_avalanches",
+    "run_eeg_to_meltdownfrac",
+    # canonical modules
+    "compute_occupant_fields",
+    "DEFAULT_OCCUPANT_MAPPING",
+    "fractional_operator_fft",
+    "simulate_d",
+    "estimate_Mth",
+    "meltdown_indicator",
+    "meltdownFrac_windowed",
+    "extract_meltdown_events",
+    "fit_event_size_tail_exponent",
 ]
