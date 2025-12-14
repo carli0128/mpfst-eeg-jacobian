@@ -14,6 +14,7 @@ CANONICAL_BANDS = {
     "alpha": (8.0, 12.0),
     "beta": (13.0, 30.0),
     "gamma": (30.0, 80.0),
+    "high_gamma": (80.0, 120.0),
 }
 
 
